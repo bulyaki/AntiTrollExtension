@@ -29,8 +29,8 @@ function updateLists(rawList) {
 
 // Load names from storage
 function loadNames(callback) {
-    chrome.storage.local.get({ namesToMark: [], downloadedNamesToMark: [], bgColor: '#ffff00', textColor: '#ff0000' }, (result) => {
-        applyCustomStyles(result.bgColor, result.textColor);
+    chrome.storage.local.get({ namesToMark: [], downloadedNamesToMark: [], bgColor: '#ffff00', textColor: '#ff0000', bgOpacity: 100 }, (result) => {
+        applyCustomStyles(result.bgColor, result.textColor, result.bgOpacity);
         const combined = [...result.namesToMark, ...result.downloadedNamesToMark];
         updateLists(combined);
         if (callback) callback();
@@ -40,9 +40,9 @@ function loadNames(callback) {
 // Listen for updates from settings or background polling
 chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local') {
-        if (changes.bgColor || changes.textColor) {
-            chrome.storage.local.get({ bgColor: '#ffff00', textColor: '#ff0000' }, (result) => {
-                applyCustomStyles(result.bgColor, result.textColor);
+        if (changes.bgColor || changes.textColor || changes.bgOpacity) {
+            chrome.storage.local.get({ bgColor: '#ffff00', textColor: '#ff0000', bgOpacity: 100 }, (result) => {
+                applyCustomStyles(result.bgColor, result.textColor, result.bgOpacity);
             });
         }
 
@@ -57,7 +57,14 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
 });
 
-function applyCustomStyles(bgColor, textColor) {
+function applyCustomStyles(bgColor, textColor, bgOpacity) {
+    // Convert hex color + opacity to rgba
+    const r = parseInt(bgColor.slice(1, 3), 16);
+    const g = parseInt(bgColor.slice(3, 5), 16);
+    const b = parseInt(bgColor.slice(5, 7), 16);
+    const a = (bgOpacity !== undefined ? bgOpacity : 100) / 100;
+    const rgbaBg = `rgba(${r}, ${g}, ${b}, ${a})`;
+
     let styleEl = document.getElementById('fb-name-marker-custom-styles');
     if (!styleEl) {
         styleEl = document.createElement('style');
@@ -66,7 +73,7 @@ function applyCustomStyles(bgColor, textColor) {
     }
     styleEl.innerHTML = `
         .fb-name-marker-highlight {
-            background-color: ${bgColor} !important;
+            background-color: ${rgbaBg} !important;
             color: ${textColor} !important;
         }
     `;

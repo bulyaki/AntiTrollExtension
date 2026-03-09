@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const bgColorInput = document.getElementById('bgColorInput');
   const textColorInput = document.getElementById('textColorInput');
+  const bgOpacityInput = document.getElementById('bgOpacityInput');
+  const bgOpacityValue = document.getElementById('bgOpacityValue');
 
   const refreshUrlsButton = document.getElementById('refreshUrlsButton');
   const fetchStatusBar = document.getElementById('fetchStatusBar');
@@ -28,6 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   bgColorInput.addEventListener('change', () => saveColors());
   textColorInput.addEventListener('change', () => saveColors());
+  bgOpacityInput.addEventListener('input', () => {
+    bgOpacityValue.textContent = bgOpacityInput.value + '%';
+    saveColors();
+  });
 
   addButton.addEventListener('click', () => addName(nameInput.value));
 
@@ -197,16 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function loadColors() {
-    chrome.storage.local.get({ bgColor: '#ffff00', textColor: '#ff0000' }, (result) => {
+    chrome.storage.local.get({ bgColor: '#ffff00', textColor: '#ff0000', bgOpacity: 100 }, (result) => {
       bgColorInput.value = result.bgColor;
       textColorInput.value = result.textColor;
+      bgOpacityInput.value = result.bgOpacity;
+      bgOpacityValue.textContent = result.bgOpacity + '%';
     });
   }
 
   function saveColors() {
     const bgColor = bgColorInput.value;
     const textColor = textColorInput.value;
-    chrome.storage.local.set({ bgColor, textColor });
+    const bgOpacity = parseInt(bgOpacityInput.value);
+    chrome.storage.local.set({ bgColor, textColor, bgOpacity });
   }
 
   function loadFetchStatus() {

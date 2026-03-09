@@ -9,10 +9,14 @@
 
 <body>
   <h2>Name Marker</h2>
-  <div class="settings-group" style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
-    <label style="font-size: 13px;">Highlight BG:</label>
+  <div class="settings-group"
+    style="margin-bottom: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+    <label style="font-size: 13px;">BG:</label>
     <input type="color" id="bgColorInput" value="#ffff00"
       style="padding: 0; cursor: pointer; height: 25px; width: 30px;">
+    <label style="font-size: 11px;">Opacity:</label>
+    <input type="range" id="bgOpacityInput" min="0" max="100" value="100" style="width: 60px; cursor: pointer;">
+    <span id="bgOpacityValue" style="font-size: 11px; min-width: 28px;">100%</span>
 
     <label style="font-size: 13px; margin-left: auto;">Text:</label>
     <input type="color" id="textColorInput" value="#ff0000"
