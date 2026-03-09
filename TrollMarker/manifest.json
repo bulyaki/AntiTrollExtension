@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "FB Name Marker",
-  "version": "1.1",
+  "name": "TrollMarker",
+  "version": "1.2",
   "description": "Highlights specific Facebook names stored in a customizable list.",
   "permissions": [
     "storage",
@@ -16,7 +16,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "FB Name Marker Settings"
+    "default_title": "TrollMarker Settings"
   },
   "icons": {
     "16": "icons/icon16.png",
