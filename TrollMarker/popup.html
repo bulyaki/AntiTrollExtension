@@ -9,6 +9,16 @@
 
 <body>
   <h2>Name Marker</h2>
+  <div class="settings-group" style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+    <label style="font-size: 13px;">Highlight BG:</label>
+    <input type="color" id="bgColorInput" value="#ffff00"
+      style="padding: 0; cursor: pointer; height: 25px; width: 30px;">
+
+    <label style="font-size: 13px; margin-left: auto;">Text:</label>
+    <input type="color" id="textColorInput" value="#ff0000"
+      style="padding: 0; cursor: pointer; height: 25px; width: 30px;">
+  </div>
+
   <div class="input-group">
     <input type="text" id="nameInput" placeholder="Enter name or profile link...">
     <button id="addButton">Add</button>
@@ -22,11 +32,24 @@
   </div>
 
   <div class="list-header">
-    <h3>Tracked Items (<span id="itemCount">0</span>)</h3>
+    <h3>Manual Tracked Items (<span id="itemCount">0</span>)</h3>
     <button id="clearAllButton" class="remove-all-btn">Clear All</button>
   </div>
 
   <ul id="nameList"></ul>
+
+  <hr style="margin: 15px 0;">
+
+  <h2>Subscription Links</h2>
+  <div class="input-group">
+    <input type="text" id="urlInput" placeholder="Enter link to .txt file...">
+    <button id="addUrlButton">Add URL</button>
+  </div>
+
+  <div class="list-header">
+    <h3>Tracked URLs (<span id="urlCount">0</span>)</h3>
+  </div>
+  <ul id="urlList"></ul>
   <script src="popup.js"></script>
 </body>
 

@@ -18,23 +18,54 @@ function updateLists(rawList) {
 
 // Load names from storage
 function loadNames(callback) {
-    chrome.storage.local.get({ namesToMark: [] }, (result) => {
-        updateLists(result.namesToMark);
+    chrome.storage.local.get({ namesToMark: [], downloadedNamesToMark: [], bgColor: '#ffff00', textColor: '#ff0000' }, (result) => {
+        applyCustomStyles(result.bgColor, result.textColor);
+        const combined = [...result.namesToMark, ...result.downloadedNamesToMark];
+        updateLists(combined);
         if (callback) callback();
     });
 }
 
-// Listen for updates from settings
+// Listen for updates from settings or background polling
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && changes.namesToMark) {
-        updateLists(changes.namesToMark.newValue);
-        // Re-scan entire body when names are updated
-        processNode(document.body);
+    if (namespace === 'local') {
+        if (changes.bgColor || changes.textColor) {
+            chrome.storage.local.get({ bgColor: '#ffff00', textColor: '#ff0000' }, (result) => {
+                applyCustomStyles(result.bgColor, result.textColor);
+            });
+        }
+
+        if (changes.namesToMark || changes.downloadedNamesToMark) {
+            chrome.storage.local.get({ namesToMark: [], downloadedNamesToMark: [] }, (result) => {
+                const combined = [...result.namesToMark, ...result.downloadedNamesToMark];
+                updateLists(combined);
+                // Re-scan entire body when names are updated
+                processNode(document.body);
+            });
+        }
     }
 });
 
+function applyCustomStyles(bgColor, textColor) {
+    let styleEl = document.getElementById('fb-name-marker-custom-styles');
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'fb-name-marker-custom-styles';
+        document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML = `
+        .fb-name-marker-highlight {
+            background-color: ${bgColor} !important;
+            color: ${textColor} !important;
+        }
+    `;
+}
+
 function processElementNode(el) {
     if (linksToMark.length === 0) return;
+
+    // Ignore header / nav elements
+    if (el.closest && (el.closest('header') || el.closest('[role="banner"]') || el.closest('[role="navigation"]'))) return;
 
     // Check if it's an anchor tag
     if (el.tagName === 'A' && el.href) {
@@ -66,6 +97,11 @@ function processTextNode(textNode) {
 
     // Don't process script or style tags
     if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'NOSCRIPT')) {
+        return;
+    }
+
+    // Ignore header / nav elements
+    if (parent && parent.closest && (parent.closest('header') || parent.closest('[role="banner"]') || parent.closest('[role="navigation"]'))) {
         return;
     }
 

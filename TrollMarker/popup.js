@@ -2,38 +2,59 @@ document.addEventListener('DOMContentLoaded', () => {
   const nameInput = document.getElementById('nameInput');
   const addButton = document.getElementById('addButton');
   const nameList = document.getElementById('nameList');
-  
+
   const bulkInput = document.getElementById('bulkInput');
   const bulkAddButton = document.getElementById('bulkAddButton');
   const clearAllButton = document.getElementById('clearAllButton');
   const itemCount = document.getElementById('itemCount');
 
-  // Load existing names
+  const urlInput = document.getElementById('urlInput');
+  const addUrlButton = document.getElementById('addUrlButton');
+  const urlList = document.getElementById('urlList');
+  const urlCount = document.getElementById('urlCount');
+
+  const bgColorInput = document.getElementById('bgColorInput');
+  const textColorInput = document.getElementById('textColorInput');
+
+  // Load existing names, URLs, and colors
   loadNames();
+  loadUrls();
+  loadColors();
+
+  bgColorInput.addEventListener('change', () => saveColors());
+  textColorInput.addEventListener('change', () => saveColors());
 
   addButton.addEventListener('click', () => addName(nameInput.value));
-  
+
   nameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       addName(nameInput.value);
     }
   });
 
+  addUrlButton.addEventListener('click', () => addUrl(urlInput.value));
+
+  urlInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      addUrl(urlInput.value);
+    }
+  });
+
   bulkAddButton.addEventListener('click', () => {
     const text = bulkInput.value;
     if (!text.trim()) return;
-    
+
     // Split by newlines and parse
     const rawItems = text.split(/[\n\t]+/);
     const newItems = rawItems.map(item => item.trim()).filter(item => item);
-    
+
     if (newItems.length === 0) return;
 
     chrome.storage.local.get({ namesToMark: [] }, (result) => {
       const names = new Set(result.namesToMark);
       newItems.forEach(item => names.add(item));
       const namesArray = Array.from(names);
-      
+
       chrome.storage.local.set({ namesToMark: namesArray }, () => {
         bulkInput.value = '';
         loadNames();
@@ -42,11 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   clearAllButton.addEventListener('click', () => {
-    if (confirm('Are you sure you want to remove all saved items?')) {
-      chrome.storage.local.set({ namesToMark: [] }, () => {
-        loadNames();
-      });
-    }
+    chrome.storage.local.set({ namesToMark: [] }, () => {
+      loadNames();
+    });
   });
 
   function loadNames() {
@@ -59,12 +78,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Truncate long strings for UI gracefully
         li.textContent = name.length > 30 ? name.substring(0, 30) + '...' : name;
         li.title = name;
-        
+
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Remove';
         removeBtn.className = 'remove-btn';
         removeBtn.addEventListener('click', () => removeName(name));
-        
+
         li.appendChild(removeBtn);
         nameList.appendChild(li);
       });
@@ -84,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
           loadNames();
         });
       } else {
-         nameInput.value = '';
+        nameInput.value = '';
       }
     });
   }
@@ -96,5 +115,79 @@ document.addEventListener('DOMContentLoaded', () => {
         loadNames();
       });
     });
+  }
+
+  function loadUrls() {
+    chrome.storage.local.get({ subscriptionUrls: [] }, (result) => {
+      urlList.innerHTML = '';
+      urlCount.textContent = result.subscriptionUrls.length;
+
+      result.subscriptionUrls.forEach(url => {
+        const li = document.createElement('li');
+        li.textContent = url.length > 40 ? url.substring(0, 40) + '...' : url;
+        li.title = url;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Remove';
+        removeBtn.className = 'remove-btn';
+        removeBtn.addEventListener('click', () => removeUrl(url));
+
+        li.appendChild(removeBtn);
+        urlList.appendChild(li);
+      });
+    });
+  }
+
+  function addUrl(inputValue) {
+    const url = inputValue.trim();
+    if (!url) return;
+
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch (_) {
+      alert("Please enter a valid URL.");
+      return;
+    }
+
+    chrome.storage.local.get({ subscriptionUrls: [] }, (result) => {
+      const urls = result.subscriptionUrls;
+      if (!urls.includes(url)) {
+        urls.push(url);
+        chrome.storage.local.set({ subscriptionUrls: urls }, () => {
+          urlInput.value = '';
+          loadUrls();
+          // Trigger background script to fetch immediately
+          chrome.runtime.sendMessage({ action: 'fetchUrls' });
+        });
+      } else {
+        urlInput.value = '';
+      }
+    });
+  }
+
+  function removeUrl(urlToRemove) {
+    chrome.storage.local.get({ subscriptionUrls: [] }, (result) => {
+      const urls = result.subscriptionUrls.filter(url => url !== urlToRemove);
+      chrome.storage.local.set({ subscriptionUrls: urls }, () => {
+        loadUrls();
+        // Since a URL was removed, we should probably re-fetch remaining to clear out old data
+        // Or simply trigger fetchUrls to rebuild the downloaded list
+        chrome.runtime.sendMessage({ action: 'fetchUrls' });
+      });
+    });
+  }
+
+  function loadColors() {
+    chrome.storage.local.get({ bgColor: '#ffff00', textColor: '#ff0000' }, (result) => {
+      bgColorInput.value = result.bgColor;
+      textColorInput.value = result.textColor;
+    });
+  }
+
+  function saveColors() {
+    const bgColor = bgColorInput.value;
+    const textColor = textColorInput.value;
+    chrome.storage.local.set({ bgColor, textColor });
   }
 });

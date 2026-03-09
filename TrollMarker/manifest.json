@@ -4,10 +4,12 @@
   "version": "1.1",
   "description": "Highlights specific Facebook names stored in a customizable list.",
   "permissions": [
-    "storage"
+    "storage",
+    "alarms"
   ],
   "host_permissions": [
-    "https://*.facebook.com/*"
+    "https://*.facebook.com/*",
+    "https://*/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -17,6 +19,9 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
