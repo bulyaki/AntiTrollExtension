@@ -9,7 +9,9 @@
   ],
   "host_permissions": [
     "https://*.facebook.com/*",
-    "https://*/*"
+    "https://*/*",
+    "http://*/*",
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -21,13 +23,23 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "scripts": [
+      "background.js"
+    ],
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
-      "matches": ["https://*.facebook.com/*"],
-      "js": ["content.js"],
-      "css": ["content.css"]
+      "matches": [
+        "https://*.facebook.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ]
     }
   ]
 }

@@ -39,16 +39,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function fetchAllUrls() {
     console.log('Fetching remote URL lists...');
 
-    // Get the configured URLs
-    chrome.storage.local.get({ subscriptionUrls: [] }, async (result) => {
-        const urls = result.subscriptionUrls;
+    try {
+        const result = await chrome.storage.local.get({ subscriptionUrls: [] });
+        const urls = result.subscriptionUrls || [];
 
         let allItems = new Set();
 
         for (const url of urls) {
             try {
-                const response = await fetch(url);
-                if (!response.ok) {
+                // Safari aggressively caches fetch in extensions. Append timestamp to force fresh request.
+                const urlWithBuster = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                const response = await fetch(urlWithBuster, { cache: 'no-store' });
+
+                // Safari can sometimes return status 0 for allowed requests (like file/cors varying logic) 
+                if (!response.ok && response.status !== 0 && response.status !== 200) {
                     console.error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
                     continue;
                 }
@@ -66,8 +70,9 @@ async function fetchAllUrls() {
         }
 
         // Save to storage
-        chrome.storage.local.set({ downloadedNamesToMark: Array.from(allItems) }, () => {
-            console.log(`Successfully fetched and saved ${allItems.size} downloaded items.`);
-        });
-    });
+        await chrome.storage.local.set({ downloadedNamesToMark: Array.from(allItems) });
+        console.log(`Successfully fetched and saved ${allItems.size} downloaded items.`);
+    } catch (e) {
+        console.error('Error in fetchAllUrls:', e);
+    }
 }
