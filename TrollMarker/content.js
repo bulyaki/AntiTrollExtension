@@ -62,7 +62,7 @@ function applyCustomStyles(bgColor, textColor) {
 }
 
 function processElementNode(el) {
-    if (linksToMark.length === 0) return;
+    if (linksToMark.length === 0 && namesToMark.length === 0) return;
 
     // Ignore header / nav elements
     if (el.closest && (el.closest('header') || el.closest('[role="banner"]') || el.closest('[role="navigation"]'))) return;
@@ -87,7 +87,7 @@ function processElementNode(el) {
 
 // Function to process a given text node
 function processTextNode(textNode) {
-    if (namesToMark.length === 0) return;
+    if (linksToMark.length === 0 && namesToMark.length === 0) return;
     const parent = textNode.parentNode;
 
     // Prevent re-processing already marked nodes

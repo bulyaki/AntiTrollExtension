@@ -5,7 +5,8 @@
   "description": "Highlights specific Facebook names stored in a customizable list.",
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "unlimitedStorage"
   ],
   "host_permissions": [
     "https://*.facebook.com/*",

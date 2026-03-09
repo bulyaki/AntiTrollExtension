@@ -16,10 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const bgColorInput = document.getElementById('bgColorInput');
   const textColorInput = document.getElementById('textColorInput');
 
-  // Load existing names, URLs, and colors
+  const refreshUrlsButton = document.getElementById('refreshUrlsButton');
+  const fetchStatusBar = document.getElementById('fetchStatusBar');
+  const fetchWarning = document.getElementById('fetchWarning');
+
+  // Load existing names, URLs, colors, and fetch status
   loadNames();
   loadUrls();
   loadColors();
+  loadFetchStatus();
 
   bgColorInput.addEventListener('change', () => saveColors());
   textColorInput.addEventListener('change', () => saveColors());
@@ -38,6 +43,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') {
       addUrl(urlInput.value);
     }
+  });
+
+  refreshUrlsButton.addEventListener('click', () => {
+    fetchStatusBar.style.display = 'block';
+    fetchStatusBar.textContent = 'Fetching...';
+    fetchWarning.style.display = 'none';
+    chrome.runtime.sendMessage({ action: 'fetchUrls' }, (response) => {
+      if (chrome.runtime.lastError) {
+        showWarning('Could not reach background service. Try reloading the extension.');
+        return;
+      }
+      displayFetchResult(response);
+    });
   });
 
   bulkAddButton.addEventListener('click', () => {
@@ -189,5 +207,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const bgColor = bgColorInput.value;
     const textColor = textColorInput.value;
     chrome.storage.local.set({ bgColor, textColor });
+  }
+
+  function loadFetchStatus() {
+    chrome.storage.local.get({ fetchStatus: null }, (result) => {
+      if (result.fetchStatus) {
+        displayFetchResult(result.fetchStatus);
+      }
+    });
+  }
+
+  function displayFetchResult(result) {
+    if (!result) return;
+
+    if (result.status === 'ok') {
+      fetchStatusBar.style.display = 'block';
+      fetchStatusBar.textContent = `✅ Last fetch: ${result.totalItems} items loaded.`;
+      fetchStatusBar.style.color = '#28a745';
+      fetchWarning.style.display = 'none';
+    } else if (result.status === 'warning') {
+      fetchStatusBar.style.display = 'block';
+      fetchStatusBar.textContent = `⚠️ Fetched ${result.totalItems} items with warnings.`;
+      fetchStatusBar.style.color = '#856404';
+      showWarning(result.errors.join('\n'));
+    } else if (result.status === 'error') {
+      fetchStatusBar.style.display = 'block';
+      fetchStatusBar.textContent = '❌ Fetch failed.';
+      fetchStatusBar.style.color = '#dc3545';
+      showWarning(result.errors.join('\n'));
+    }
+  }
+
+  function showWarning(message) {
+    fetchWarning.style.display = 'block';
+    fetchWarning.textContent = message;
   }
 });
