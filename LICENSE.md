@@ -1,19 +1,21 @@
-# License / Licenc
+MIT License
 
-This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)** (or a similar Copyleft/ShareAlike model). 
+Copyright (c) 2026 Peter Bulyaki
 
-## English
-You are completely free to use, share, distribute, and modify this extension under the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. **Attribution (Credit)**: You must give appropriate credit to the original creator of this extension. You must provide a link to the original repository and indicate if you made any changes. 
-2. **ShareAlike (Open Source)**: If you remix, transform, modify, or build upon this extension, you **must** distribute your contributions under this exact same license. Any derivative work must remain completely Open Source and publicly available. You may not make modified versions closed-source.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
----
-
-## Magyar (Hungarian)
-A projekt a **GNU General Public License v3.0 (GPL-3.0)** (vagy hasonló "Így add tovább!" / Copyleft modell) alapján használható.
-
-Teljes mértékben szabadon használhatod, megoszthatod, terjesztheted és módosíthatod ezt a bővítményt az alábbi feltételekkel:
-
-1. **Szerző megjelölése (Kredit)**: Megfelelő módon hivatkoznod kell a bővítmény eredeti alkotójára. Linket kell biztosítanod az eredeti tárolóhoz (repository), és jelezned kell, ha bármilyen módosítást végeztél a kódon.
-2. **Így add tovább! (Nyílt forráskód)**: Ha átdolgozod, átalakítod, módosítod vagy építesz erre a bővítményre, a saját verziódat **kötelezően** ugyanezen licenc feltételei alatt kell továbbadnod. Minden származtatott műnek teljesen nyílt forráskódúnak és nyilvánosan elérhetőnek kell maradnia. A módosított verziókat tilos zárt forráskódúvá tenni.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
