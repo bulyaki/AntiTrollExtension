@@ -1,19 +1,30 @@
-let namesToMark = [];
+let namesToMark = [];     // standalone names (manually added, no URL pair)
+let exactNamesToMark = []; // names from file pairs (only exact match)
 let linksToMark = [];
 
 function updateLists(rawList) {
     namesToMark = [];
+    exactNamesToMark = [];
     linksToMark = [];
     rawList.forEach(item => {
-        // If it starts with http or contains facebook.com, treat as a URL.
-        if (item.includes('facebook.com') || item.startsWith('http')) {
+        // Check if it's a tab-separated "Name\tURL" pair from a file
+        if (item.includes('\t')) {
+            const parts = item.split('\t');
+            const url = parts.slice(1).join('\t').trim();
+            if (url && (url.includes('facebook.com') || url.startsWith('http'))) {
+                linksToMark.push(url);
+            }
+            // Names from file pairs are NOT used for matching — only URLs matter
+        } else if (item.includes('facebook.com') || item.startsWith('http')) {
             linksToMark.push(item);
         } else {
+            // Standalone names (manually added) — used for substring matching
             namesToMark.push(item);
         }
     });
     // Sort names to match longest first
     namesToMark.sort((a, b) => b.length - a.length);
+    exactNamesToMark.sort((a, b) => b.length - a.length);
 }
 
 // Load names from storage
@@ -79,6 +90,10 @@ function processElementNode(el) {
             let cleanHref = href.replace(/\/$/, '');
             if (cleanHref.includes(cleanLink) || cleanLink.includes(cleanHref)) {
                 el.classList.add('fb-name-marker-highlight');
+                // Also highlight all child elements so the displayed name text is visually marked
+                el.querySelectorAll('*').forEach(child => {
+                    child.classList.add('fb-name-marker-highlight');
+                });
                 break;
             }
         }
@@ -87,7 +102,7 @@ function processElementNode(el) {
 
 // Function to process a given text node
 function processTextNode(textNode) {
-    if (linksToMark.length === 0 && namesToMark.length === 0) return;
+    if (linksToMark.length === 0 && namesToMark.length === 0 && exactNamesToMark.length === 0) return;
     const parent = textNode.parentNode;
 
     // Prevent re-processing already marked nodes
@@ -105,9 +120,22 @@ function processTextNode(textNode) {
         return;
     }
 
-    // Check if any tracked name is in the text
     let content = textNode.nodeValue;
     if (!content || !content.trim()) return;
+    const trimmed = content.trim();
+
+    // 1. Exact name matching (names from file pairs — high precision)
+    for (const name of exactNamesToMark) {
+        if (trimmed === name) {
+            if (parent) {
+                parent.classList.add('fb-name-marker-highlight');
+            }
+            return;
+        }
+    }
+
+    // 2. Substring matching (standalone manually-added names only)
+    if (namesToMark.length === 0) return;
 
     let matchFound = false;
     for (const name of namesToMark) {
@@ -120,8 +148,7 @@ function processTextNode(textNode) {
     if (!matchFound) return;
 
     for (const name of namesToMark) {
-        // If the text node is exactly the name, or very close (with some whitespace)
-        if (content.trim() === name) {
+        if (trimmed === name) {
             if (parent) {
                 parent.classList.add('fb-name-marker-highlight');
             }

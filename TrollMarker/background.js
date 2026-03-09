@@ -108,8 +108,8 @@ async function fetchAllUrls() {
                     continue;
                 }
 
-                // Parse plain text: split by newlines and tabs, keep all valid entries
-                const lines = text.split(/[\n\r\t]+/).map(item => item.trim()).filter(item => item);
+                // Parse plain text: split by newlines only (keep tab-separated name+URL pairs intact)
+                const lines = text.split(/[\n\r]+/).map(item => item.trim()).filter(item => item);
 
                 let validCount = 0;
                 for (const line of lines) {
