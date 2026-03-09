@@ -1,0 +1,136 @@
+body {
+  width: 280px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 15px;
+  color: #333;
+}
+
+h2 {
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.input-group {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+#nameInput {
+  flex-grow: 1;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px 0 0 4px;
+}
+
+#addButton {
+  padding: 5px 10px;
+  background-color: #1877f2;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+}
+
+#addButton:hover {
+  background-color: #166fe5;
+}
+
+.bulk-group {
+  margin-bottom: 15px;
+}
+
+#bulkInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 80px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  margin-bottom: 5px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#bulkAddButton {
+  padding: 5px 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+#bulkAddButton:hover {
+  background-color: #218838;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+h3 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.remove-all-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.remove-all-btn:hover {
+  background: #c82333;
+}
+
+#nameList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  border-top: 1px solid #eee;
+}
+
+#nameList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 5px;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,7 @@
+.fb-name-marker-highlight {
+    background-color: yellow !important;
+    color: red !important;
+    font-weight: bold !important;
+    border-radius: 3px;
+    padding: 0 2px;
+}
