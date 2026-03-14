@@ -1,85 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
-  <title>FB Name Marker Settings</title>
+  <title>TrollMarker Settings</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 
 <body>
-  <div class="container">
-    <header class="header">
-      <h1>Name Marker</h1>
-      <p class="subtitle">Highlight and track names on Facebook</p>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-icon" src="icons/icon48.png" alt="">
+        <div class="brand-copy">
+          <h1>TrollMarker</h1>
+          <p>Compact controls for Facebook name tracking</p>
+        </div>
+      </div>
     </header>
 
-    <section class="section">
-      <h2>Appearance</h2>
-      <div class="color-settings">
-        <div class="color-row">
-          <div class="color-control">
-            <label for="bgColorInput">Background</label>
-            <div class="color-input-wrapper">
-              <input type="color" id="bgColorInput" value="#ffff00">
-              <span class="color-value" id="bgColorValue">#ffff00</span>
-            </div>
-          </div>
-          <div class="color-control">
-            <label for="textColorInput">Text</label>
-            <div class="color-input-wrapper">
-              <input type="color" id="textColorInput" value="#ff0000">
-              <span class="color-value" id="textColorValue">#ff0000</span>
-            </div>
-          </div>
+    <section class="panel panel-tight">
+      <div class="panel-head">
+        <div>
+          <h2>Appearance</h2>
+          <p>Updates apply immediately to new highlights.</p>
         </div>
-        <div class="opacity-control">
-          <label for="bgOpacityInput">Opacity</label>
-          <div class="slider-wrapper">
+      </div>
+
+      <div class="appearance-grid">
+        <div class="field">
+          <label class="field-label" for="bgColorInput">Highlight</label>
+          <span class="swatch-control">
+            <span class="swatch-preview" id="bgColorSwatch" aria-hidden="true"></span>
+            <span class="color-value" id="bgColorValue">#FFFF00</span>
+            <span class="color-input-wrapper">
+              <input type="color" id="bgColorInput" class="color-input-overlay" value="#ffff00"
+                aria-label="Highlight color">
+            </span>
+          </span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="textColorInput">Text</label>
+          <span class="swatch-control">
+            <span class="swatch-preview" id="textColorSwatch" aria-hidden="true"></span>
+            <span class="color-value" id="textColorValue">#FF0000</span>
+            <span class="color-input-wrapper">
+              <input type="color" id="textColorInput" class="color-input-overlay" value="#ff0000"
+                aria-label="Text color">
+            </span>
+          </span>
+        </div>
+
+        <div class="field field-wide">
+          <label class="field-label" for="bgOpacityInput">Opacity</label>
+          <span class="slider-control">
             <input type="range" id="bgOpacityInput" min="0" max="100" value="100">
             <span id="bgOpacityValue" class="slider-value">100%</span>
-          </div>
+          </span>
         </div>
       </div>
     </section>
 
-    <section class="section">
-      <h2>Add Names</h2>
-      <div class="input-group">
-        <input type="text" id="nameInput" placeholder="Enter name or profile link...">
+    <div class="segmented-control" role="tablist" aria-label="Popup sections">
+      <button type="button" class="tab-button is-active" id="namesTabButton" data-panel="namesPanel"
+        aria-controls="namesPanel" aria-selected="true" role="tab">
+        Manual
+        <span class="count-pill" id="itemCount">0</span>
+      </button>
+      <button type="button" class="tab-button" id="sourcesTabButton" data-panel="sourcesPanel"
+        aria-controls="sourcesPanel" aria-selected="false" role="tab">
+        Sources
+        <span class="count-pill" id="urlCount">0</span>
+      </button>
+    </div>
+
+    <section class="panel tab-panel is-active" id="namesPanel" role="tabpanel" aria-labelledby="namesTabButton">
+      <div class="panel-head">
+        <div>
+          <h2>Tracked Names</h2>
+          <p>Add a single entry or paste a batch.</p>
+        </div>
+        <button id="clearAllButton" class="btn btn-secondary btn-small">Clear</button>
+      </div>
+
+      <div class="inline-form">
+        <input type="text" id="nameInput" placeholder="Name or profile link">
         <button id="addButton" class="btn btn-primary">Add</button>
       </div>
 
-      <div class="bulk-group">
-        <textarea id="bulkInput" placeholder="Paste multiple names or links here (one per line)"></textarea>
-        <button id="bulkAddButton" class="btn btn-success btn-full">Bulk Add</button>
-      </div>
-    </section>
+      <button type="button" id="bulkToggleButton" class="inline-toggle" aria-expanded="false"
+        aria-controls="bulkComposer">
+        Paste multiple names
+      </button>
 
-    <section class="section">
-      <div class="list-header">
-        <h3>Tracked Names <span class="badge" id="itemCount">0</span></h3>
-        <button id="clearAllButton" class="btn btn-danger btn-small">Clear All</button>
+      <div class="bulk-composer" id="bulkComposer" hidden>
+        <textarea id="bulkInput" placeholder="One name or link per line"></textarea>
+        <div class="composer-actions">
+          <button id="bulkAddButton" class="btn btn-accent btn-small">Import List</button>
+        </div>
       </div>
+
       <ul id="nameList" class="item-list"></ul>
     </section>
 
-    <section class="section">
-      <h2>Subscription Links</h2>
-      <div class="input-group">
-        <input type="text" id="urlInput" placeholder="Enter link to .txt file...">
-        <button id="addUrlButton" class="btn btn-primary">Add URL</button>
+    <section class="panel tab-panel" id="sourcesPanel" role="tabpanel" aria-labelledby="sourcesTabButton" hidden>
+      <div class="panel-head">
+        <div>
+          <h2>Subscription Sources</h2>
+          <p>Use raw `.txt` links for synced imports.</p>
+        </div>
+        <button id="refreshUrlsButton" class="btn btn-secondary btn-small">Refresh</button>
       </div>
 
-      <div class="list-header">
-        <h3>Tracked URLs <span class="badge" id="urlCount">0</span></h3>
-        <button id="refreshUrlsButton" class="btn btn-info btn-small">Refresh</button>
+      <div class="inline-form">
+        <input type="text" id="urlInput" placeholder="Direct .txt URL">
+        <button id="addUrlButton" class="btn btn-primary">Add</button>
       </div>
+
+      <div id="fetchStatusBar" class="status-bar" hidden></div>
+      <div id="fetchWarning" class="status-bar status-warning" hidden></div>
+
       <ul id="urlList" class="item-list"></ul>
     </section>
-
-    <div id="fetchStatusBar" class="status-bar status-success" style="display: none;"></div>
-    <div id="fetchWarning" class="status-bar status-warning" style="display: none;"></div>
   </div>
 
   <script src="popup.js"></script>
