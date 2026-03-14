@@ -12,11 +12,11 @@ function updateLists(rawList) {
             const parts = item.split('\t');
             const url = parts.slice(1).join('\t').trim();
             if (url && (url.includes('facebook.com') || url.startsWith('http'))) {
-                linksToMark.push(url);
+                linksToMark.push(url.replace(/\/$/, ''));
             }
             // Names from file pairs are NOT used for matching — only URLs matter
         } else if (item.includes('facebook.com') || item.startsWith('http')) {
-            linksToMark.push(item);
+            linksToMark.push(item.replace(/\/$/, ''));
         } else {
             // Standalone names (manually added) — used for substring matching
             namesToMark.push(item);
@@ -91,10 +91,9 @@ function processElementNode(el) {
 
         let href = el.href;
         // Basic match: if the stored link URL is found inside the actual href
-        // We strip the trailing slash for better matching
-        for (let link of linksToMark) {
-            let cleanLink = link.replace(/\/$/, '');
-            let cleanHref = href.replace(/\/$/, '');
+        // We strip the trailing slash once for better matching
+        let cleanHref = href.replace(/\/$/, '');
+        for (let cleanLink of linksToMark) {
             if (cleanHref.includes(cleanLink) || cleanLink.includes(cleanHref)) {
                 el.classList.add('fb-name-marker-highlight');
                 // Also highlight all child elements so the displayed name text is visually marked

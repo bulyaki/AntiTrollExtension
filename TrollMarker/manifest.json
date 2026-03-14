@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TrollMarker",
-  "version": "1.2",
+  "version": "1.3",
   "description": "Highlights specific Facebook names stored in a customizable list.",
   "permissions": [
     "storage",

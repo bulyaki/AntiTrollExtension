@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const textColorInput = document.getElementById('textColorInput');
   const bgOpacityInput = document.getElementById('bgOpacityInput');
   const bgOpacityValue = document.getElementById('bgOpacityValue');
+  const bgColorValue = document.getElementById('bgColorValue');
+  const textColorValue = document.getElementById('textColorValue');
 
   const refreshUrlsButton = document.getElementById('refreshUrlsButton');
   const fetchStatusBar = document.getElementById('fetchStatusBar');
@@ -28,8 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
   loadColors();
   loadFetchStatus();
 
-  bgColorInput.addEventListener('change', () => saveColors());
-  textColorInput.addEventListener('change', () => saveColors());
+  bgColorInput.addEventListener('change', () => {
+    saveColors();
+    bgColorValue.textContent = bgColorInput.value;
+  });
+
+  textColorInput.addEventListener('change', () => {
+    saveColors();
+    textColorValue.textContent = textColorInput.value;
+  });
+
   bgOpacityInput.addEventListener('input', () => {
     bgOpacityValue.textContent = bgOpacityInput.value + '%';
     saveColors();
@@ -54,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshUrlsButton.addEventListener('click', () => {
     fetchStatusBar.style.display = 'block';
     fetchStatusBar.textContent = 'Fetching...';
+    fetchStatusBar.className = 'status-bar';
     fetchWarning.style.display = 'none';
     chrome.runtime.sendMessage({ action: 'fetchUrls' }, (response) => {
       if (chrome.runtime.lastError) {
@@ -97,17 +108,25 @@ document.addEventListener('DOMContentLoaded', () => {
       nameList.innerHTML = '';
       itemCount.textContent = result.namesToMark.length;
 
+      if (result.namesToMark.length === 0) {
+        nameList.innerHTML = '<li class="empty-state">No tracked names yet</li>';
+        return;
+      }
+
       result.namesToMark.forEach(name => {
         const li = document.createElement('li');
-        // Truncate long strings for UI gracefully
-        li.textContent = name.length > 30 ? name.substring(0, 30) + '...' : name;
-        li.title = name;
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'item-text';
+        textSpan.textContent = name.length > 35 ? name.substring(0, 35) + '...' : name;
+        textSpan.title = name;
 
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Remove';
         removeBtn.className = 'remove-btn';
         removeBtn.addEventListener('click', () => removeName(name));
 
+        li.appendChild(textSpan);
         li.appendChild(removeBtn);
         nameList.appendChild(li);
       });
@@ -146,16 +165,25 @@ document.addEventListener('DOMContentLoaded', () => {
       urlList.innerHTML = '';
       urlCount.textContent = result.subscriptionUrls.length;
 
+      if (result.subscriptionUrls.length === 0) {
+        urlList.innerHTML = '<li class="empty-state">No subscription URLs yet</li>';
+        return;
+      }
+
       result.subscriptionUrls.forEach(url => {
         const li = document.createElement('li');
-        li.textContent = url.length > 40 ? url.substring(0, 40) + '...' : url;
-        li.title = url;
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'item-text';
+        textSpan.textContent = url.length > 40 ? url.substring(0, 40) + '...' : url;
+        textSpan.title = url;
 
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Remove';
         removeBtn.className = 'remove-btn';
         removeBtn.addEventListener('click', () => removeUrl(url));
 
+        li.appendChild(textSpan);
         li.appendChild(removeBtn);
         urlList.appendChild(li);
       });
@@ -208,6 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
       textColorInput.value = result.textColor;
       bgOpacityInput.value = result.bgOpacity;
       bgOpacityValue.textContent = result.bgOpacity + '%';
+      bgColorValue.textContent = result.bgColor;
+      textColorValue.textContent = result.textColor;
     });
   }
 
@@ -231,18 +261,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (result.status === 'ok') {
       fetchStatusBar.style.display = 'block';
-      fetchStatusBar.textContent = `✅ Last fetch: ${result.totalItems} items loaded.`;
-      fetchStatusBar.style.color = '#28a745';
+      fetchStatusBar.textContent = `✓ Last fetch: ${result.totalItems} items loaded`;
+      fetchStatusBar.className = 'status-bar status-success';
       fetchWarning.style.display = 'none';
     } else if (result.status === 'warning') {
       fetchStatusBar.style.display = 'block';
-      fetchStatusBar.textContent = `⚠️ Fetched ${result.totalItems} items with warnings.`;
-      fetchStatusBar.style.color = '#856404';
+      fetchStatusBar.textContent = `⚠ Fetched ${result.totalItems} items with warnings`;
+      fetchStatusBar.className = 'status-bar status-warning';
       showWarning(result.errors.join('\n'));
     } else if (result.status === 'error') {
       fetchStatusBar.style.display = 'block';
-      fetchStatusBar.textContent = '❌ Fetch failed.';
-      fetchStatusBar.style.color = '#dc3545';
+      fetchStatusBar.textContent = 'Fetch failed';
+      fetchStatusBar.className = 'status-bar status-error';
       showWarning(result.errors.join('\n'));
     }
   }
