@@ -1,141 +1,13 @@
-// Layout measurement and sizing constants
-const LAYOUT = {
-  bodyPadding: 12,
-  shellPadding: 12,
-  shellBorder: 2, // 1px * 2 sides
-  topbarMarginBottom: 10,
-  panelMarginBottom: 12,
-  segmentedControlGap: 8,
-  segmentedControlMarginBottom: 12,
+document.addEventListener('DOMContentLoaded', async () => {
+  const POPUP_MARGIN = 10;
+  const POPUP_SAFE_MIN_HEIGHT = 320;
+  let heightAlignFrame = 0;
 
-  // Topbar
-  brandIconSize: 38,
-  brandCopyHeight: 36,
-
-  // Appearance panel
-  appearancePanelPadding: 14,
-  appearancePanelBorder: 2,
-  appearanceGridGap: 10,
-  fieldGap: 6,
-  swatchControlHeight: 40,
-  fieldLabelHeight: 14,
-
-  // Tab buttons
-  tabButtonHeight: 36,
-
-  // Panel headers
-  panelHeadMarginBottom: 10,
-  panelHeadHeight: 32,
-
-  // Forms
-  inlineFormGap: 10,
-  inlineFormMarginBottom: 10,
-  inputHeight: 38,
-  btnHeight: 38,
-
-  // Bulk composer
-  inlineToggleHeight: 34,
-  inlineToggleMarginBottom: 8,
-  bulkComposerMarginBottom: 10,
-  textareaHeight: 86,
-  composerActionsMarginTop: 10,
-
-  // Lists
-  itemListBorder: 2,
-  itemListBorderRadius: 13,
-  listItemMinHeight: 40,
-  listItemPadding: 16, // 8px top + 8px bottom
-  emptyStateHeight: 78,
-  listMaxHeight: 212,
-
-  // Status bars
-  statusBarMarginBottom: 10,
-  statusBarPadding: 20, // 10px * 2
-  statusBarHeight: 40,
-};
-
-// Calculate exact heights
-function calculateHeights() {
-  // Topbar: icon height + margins
-  const topbarHeight = LAYOUT.brandCopyHeight + LAYOUT.topbarMarginBottom;
-
-  // Appearance panel: padding*2 + border + grid content
-  const appearanceRow1Height = LAYOUT.fieldLabelHeight + LAYOUT.swatchControlHeight;
-  const appearanceRow2Height = LAYOUT.fieldLabelHeight + LAYOUT.swatchControlHeight;
-  const appearanceRow3Height = LAYOUT.fieldLabelHeight + LAYOUT.sliderControlHeight;
-  const appearanceContentHeight = appearanceRow1Height + LAYOUT.appearanceGridGap + appearanceRow3Height;
-  const appearancePanelHeight = LAYOUT.appearancePanelPadding * 2 + LAYOUT.appearancePanelBorder + appearanceContentHeight;
-
-  // Segmented control
-  const segmentedControlHeight = LAYOUT.tabButtonHeight + LAYOUT.segmentedControlMarginBottom;
-
-  return { topbarHeight, appearancePanelHeight, segmentedControlHeight };
-}
-
-// Measure actual DOM element heights
-function measureElementHeight(element) {
-  if (!element || element.hidden || element.offsetParent === null) {
-    return 0;
-  }
-  return element.offsetHeight;
-}
-
-// Calculate total content height
-function calculateContentHeight() {
   const appShell = document.querySelector('.app-shell');
-  if (!appShell) return 0;
-
-  let contentHeight = 0;
-
-  // Measure all visible children of app-shell
-  const children = appShell.children;
-  for (const child of children) {
-    contentHeight += measureElementHeight(child);
-  }
-
-  // Add shell padding and border
-  contentHeight += LAYOUT.shellPadding * 2 + LAYOUT.shellBorder;
-
-  return contentHeight;
-}
-
-// Resize popup window to fit content
-function resizePopup() {
-  requestAnimationFrame(() => {
-    const contentHeight = calculateContentHeight();
-
-    // Add small buffer for rendering consistency
-    const targetHeight = Math.ceil(contentHeight + 4);
-
-    // Get current window
-    chrome.windows.getCurrent((window) => {
-      if (!window) return;
-
-      // Only resize if height differs significantly (>2px)
-      const heightDiff = Math.abs(window.height - targetHeight);
-      if (heightDiff > 2) {
-        chrome.windows.update(window.id, {
-          height: targetHeight,
-          width: 368 // Keep fixed width
-        });
-      }
-    });
-  });
-}
-
-// Debounced resize for performance
-let resizeTimeout = null;
-function scheduleResize() {
-  if (resizeTimeout) {
-    clearTimeout(resizeTimeout);
-  }
-  resizeTimeout = setTimeout(resizePopup, 50);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
   const namesPanel = document.getElementById('namesPanel');
   const sourcesPanel = document.getElementById('sourcesPanel');
-  const tabButtons = Array.from(document.querySelectorAll('.tab-button'));
+  const namesTabButton = document.getElementById('namesTabButton');
+  const sourcesTabButton = document.getElementById('sourcesTabButton');
 
   const nameInput = document.getElementById('nameInput');
   const addButton = document.getElementById('addButton');
@@ -155,302 +27,260 @@ document.addEventListener('DOMContentLoaded', () => {
   const refreshUrlsButton = document.getElementById('refreshUrlsButton');
 
   const bgColorInput = document.getElementById('bgColorInput');
+  const bgColorButton = document.getElementById('bgColorButton');
+  const bgColorDot = document.getElementById('bgColorDot');
   const textColorInput = document.getElementById('textColorInput');
+  const textColorButton = document.getElementById('textColorButton');
+  const textColorDot = document.getElementById('textColorDot');
   const bgOpacityInput = document.getElementById('bgOpacityInput');
   const bgOpacityValue = document.getElementById('bgOpacityValue');
   const bgColorValue = document.getElementById('bgColorValue');
   const textColorValue = document.getElementById('textColorValue');
-  const bgColorSwatch = document.getElementById('bgColorSwatch');
-  const textColorSwatch = document.getElementById('textColorSwatch');
 
   const fetchStatusBar = document.getElementById('fetchStatusBar');
   const fetchWarning = document.getElementById('fetchWarning');
 
-  setActivePanel('namesPanel');
-  setBulkComposer(false);
+  const measureRoot = document.createElement('div');
+  measureRoot.className = 'popup-measure-root';
+  document.body.appendChild(measureRoot);
 
-  loadNames();
-  loadUrls();
-  loadColors();
-  loadFetchStatus();
+  const state = {
+    activePanel: 'namesPanel',
+    bulkExpanded: false,
+    names: [],
+    urls: [],
+    fetchBar: {
+      hidden: true,
+      tone: 'status-info',
+      text: ''
+    },
+    fetchWarning: ''
+  };
 
-  // Initial resize after content loads
-  scheduleResize();
-
-  tabButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      setActivePanel(button.dataset.panel);
-      scheduleResize();
-    });
-  });
-
-  bulkToggleButton.addEventListener('click', () => {
-    setBulkComposer(bulkComposer.hidden);
-    scheduleResize();
-  });
-
-  bgColorInput.addEventListener('input', () => {
-    updateAppearanceLabels();
-    saveColors();
-  });
-
-  textColorInput.addEventListener('input', () => {
-    updateAppearanceLabels();
-    saveColors();
-  });
-
-  bgOpacityInput.addEventListener('input', () => {
-    updateAppearanceLabels();
-    saveColors();
-  });
-
-  addButton.addEventListener('click', () => addName(nameInput.value));
-  nameInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      addName(nameInput.value);
+  bindEvents();
+  try {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
     }
-  });
-
-  bulkAddButton.addEventListener('click', () => {
-    const rawItems = bulkInput.value.split(/[\n\r\t]+/);
-    const newItems = rawItems.map((item) => item.trim()).filter(Boolean);
-
-    if (newItems.length === 0) {
-      return;
-    }
-
-    chrome.storage.local.get({ namesToMark: [] }, (result) => {
-      const names = new Set(result.namesToMark);
-      newItems.forEach((item) => names.add(item));
-
-      chrome.storage.local.set({ namesToMark: Array.from(names) }, () => {
-        bulkInput.value = '';
-        setBulkComposer(false);
-        loadNames();
-        scheduleResize();
-      });
-    });
-  });
-
-  clearAllButton.addEventListener('click', () => {
-    chrome.storage.local.set({ namesToMark: [] }, () => {
-      loadNames();
-      scheduleResize();
-    });
-  });
-
-  addUrlButton.addEventListener('click', () => addUrl(urlInput.value));
-  urlInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      addUrl(urlInput.value);
-    }
-  });
-
-  refreshUrlsButton.addEventListener('click', () => {
-    refreshSubscriptions('Refreshing source lists...');
-    scheduleResize();
-  });
-
-  function setActivePanel(panelId) {
-    tabButtons.forEach((button) => {
-      const isActive = button.dataset.panel === panelId;
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
-
-    [namesPanel, sourcesPanel].forEach((panel) => {
-      const isActive = panel.id === panelId;
-      panel.classList.toggle('is-active', isActive);
-      panel.hidden = !isActive;
-    });
+    await initializeState();
+  } catch (error) {
+    console.error('Popup initialization failed:', error);
+    updateAppearanceLabels();
   }
+  runTwoPassLayout();
+  document.body.classList.add('popup-ready');
 
-  function setBulkComposer(isExpanded) {
-    bulkComposer.hidden = !isExpanded;
-    document.body.classList.toggle('is-bulk-open', isExpanded);
-    bulkToggleButton.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
-    bulkToggleButton.textContent = isExpanded ? 'Hide bulk paste' : 'Paste multiple names';
-  }
+  function bindEvents() {
+    namesTabButton.addEventListener('click', () => {
+      state.activePanel = 'namesPanel';
+      runTwoPassLayout();
+    });
 
-  function loadNames() {
-    chrome.storage.local.get({ namesToMark: [] }, (result) => {
-      const names = result.namesToMark || [];
-      nameList.innerHTML = '';
-      itemCount.textContent = String(names.length);
+    sourcesTabButton.addEventListener('click', () => {
+      state.activePanel = 'sourcesPanel';
+      runTwoPassLayout();
+    });
 
-      if (names.length === 0) {
-        nameList.appendChild(createEmptyState('No tracked names yet.'));
-        scheduleResize();
+    bulkToggleButton.addEventListener('click', () => {
+      state.bulkExpanded = !state.bulkExpanded;
+      runTwoPassLayout();
+    });
+
+    bgColorButton.addEventListener('click', (event) => {
+      openAnchoredColorPicker(bgColorInput, bgColorButton, event);
+    });
+
+    textColorButton.addEventListener('click', (event) => {
+      openAnchoredColorPicker(textColorInput, textColorButton, event);
+    });
+
+    bgColorInput.addEventListener('input', () => {
+      updateAppearanceLabels();
+      saveColors();
+    });
+
+    textColorInput.addEventListener('input', () => {
+      updateAppearanceLabels();
+      saveColors();
+    });
+
+    bgOpacityInput.addEventListener('input', () => {
+      updateAppearanceLabels();
+      saveColors();
+    });
+
+    addButton.addEventListener('click', async () => {
+      await addName(nameInput.value);
+    });
+
+    nameInput.addEventListener('keydown', async (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        await addName(nameInput.value);
+      }
+    });
+
+    bulkAddButton.addEventListener('click', async () => {
+      const rawItems = bulkInput.value.split(/[\n\r\t]+/);
+      const newItems = rawItems.map((item) => item.trim()).filter(Boolean);
+
+      if (newItems.length === 0) {
         return;
       }
 
-      names.forEach((name) => {
-        nameList.appendChild(createListItem(name, 40, () => {
-          removeName(name);
-          scheduleResize();
-        }));
-      });
+      const merged = new Set(state.names);
+      newItems.forEach((item) => merged.add(item));
+      state.names = Array.from(merged);
+      state.bulkExpanded = false;
 
-      scheduleResize();
+      await storageSet({ namesToMark: state.names });
+      bulkInput.value = '';
+      runTwoPassLayout();
+    });
+
+    clearAllButton.addEventListener('click', async () => {
+      state.names = [];
+      await storageSet({ namesToMark: [] });
+      runTwoPassLayout();
+    });
+
+    addUrlButton.addEventListener('click', async () => {
+      await addUrl(urlInput.value);
+    });
+
+    urlInput.addEventListener('keydown', async (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        await addUrl(urlInput.value);
+      }
+    });
+
+    refreshUrlsButton.addEventListener('click', async () => {
+      await refreshSubscriptions('Refreshing source lists...');
     });
   }
 
-  function addName(inputValue) {
+  async function initializeState() {
+    const [namesResult, urlsResult, colorsResult, fetchResult] = await Promise.all([
+      storageGet({ namesToMark: [] }),
+      storageGet({ subscriptionUrls: [] }),
+      storageGet({ bgColor: '#ffff00', textColor: '#ff0000', bgOpacity: 100 }),
+      storageGet({ fetchStatus: null })
+    ]);
+
+    state.names = namesResult.namesToMark || [];
+    state.urls = urlsResult.subscriptionUrls || [];
+
+    bgColorInput.value = colorsResult.bgColor;
+    textColorInput.value = colorsResult.textColor;
+    bgOpacityInput.value = colorsResult.bgOpacity;
+    updateAppearanceLabels();
+
+    if (fetchResult.fetchStatus) {
+      applyFetchResult(fetchResult.fetchStatus);
+    }
+  }
+
+  async function addName(inputValue) {
     const name = inputValue.trim();
     if (!name) {
       return;
     }
 
-    chrome.storage.local.get({ namesToMark: [] }, (result) => {
-      const names = result.namesToMark || [];
-      if (!names.includes(name)) {
-        names.push(name);
-        chrome.storage.local.set({ namesToMark: names }, () => {
-          nameInput.value = '';
-          loadNames();
-        });
-        return;
-      }
+    if (!state.names.includes(name)) {
+      state.names = [...state.names, name];
+      await storageSet({ namesToMark: state.names });
+    }
 
-      nameInput.value = '';
-    });
+    nameInput.value = '';
+    runTwoPassLayout();
   }
 
-  function removeName(nameToRemove) {
-    chrome.storage.local.get({ namesToMark: [] }, (result) => {
-      const names = (result.namesToMark || []).filter((name) => name !== nameToRemove);
-      chrome.storage.local.set({ namesToMark: names }, () => {
-        loadNames();
-      });
-    });
+  async function removeName(nameToRemove) {
+    state.names = state.names.filter((name) => name !== nameToRemove);
+    await storageSet({ namesToMark: state.names });
+    runTwoPassLayout();
   }
 
-  function loadUrls() {
-    chrome.storage.local.get({ subscriptionUrls: [] }, (result) => {
-      const urls = result.subscriptionUrls || [];
-      urlList.innerHTML = '';
-      urlCount.textContent = String(urls.length);
-
-      if (urls.length === 0) {
-        urlList.appendChild(createEmptyState('No subscription sources configured.'));
-        scheduleResize();
-        return;
-      }
-
-      urls.forEach((url) => {
-        urlList.appendChild(createListItem(url, 44, () => {
-          removeUrl(url);
-          scheduleResize();
-        }));
-      });
-
-      scheduleResize();
-    });
-  }
-
-  function addUrl(inputValue) {
+  async function addUrl(inputValue) {
     const url = inputValue.trim();
     if (!url) {
       return;
     }
 
-    setActivePanel('sourcesPanel');
-    hideWarning();
+    state.activePanel = 'sourcesPanel';
+    state.fetchWarning = '';
 
     try {
       new URL(url);
     } catch (_) {
-      showWarning('Enter a valid direct URL to a raw text file.');
-      scheduleResize();
+      state.fetchWarning = 'Enter a valid direct URL to a raw text file.';
+      runTwoPassLayout();
       return;
     }
 
-    chrome.storage.local.get({ subscriptionUrls: [] }, (result) => {
-      const urls = result.subscriptionUrls || [];
+    if (state.urls.includes(url)) {
+      urlInput.value = '';
+      state.fetchWarning = 'That subscription source is already added.';
+      runTwoPassLayout();
+      return;
+    }
 
-      if (urls.includes(url)) {
-        urlInput.value = '';
-        showWarning('That subscription source is already added.');
-        scheduleResize();
-        return;
-      }
-
-      urls.push(url);
-      chrome.storage.local.set({ subscriptionUrls: urls }, () => {
-        urlInput.value = '';
-        loadUrls();
-        refreshSubscriptions('Refreshing source lists...');
-      });
-    });
+    state.urls = [...state.urls, url];
+    await storageSet({ subscriptionUrls: state.urls });
+    urlInput.value = '';
+    runTwoPassLayout();
+    await refreshSubscriptions('Refreshing source lists...');
   }
 
-  function removeUrl(urlToRemove) {
-    chrome.storage.local.get({ subscriptionUrls: [] }, (result) => {
-      const urls = (result.subscriptionUrls || []).filter((url) => url !== urlToRemove);
-      chrome.storage.local.set({ subscriptionUrls: urls }, () => {
-        loadUrls();
-        refreshSubscriptions('Refreshing source lists...');
-      });
-    });
-  }
-
-  function loadColors() {
-    chrome.storage.local.get({ bgColor: '#ffff00', textColor: '#ff0000', bgOpacity: 100 }, (result) => {
-      bgColorInput.value = result.bgColor;
-      textColorInput.value = result.textColor;
-      bgOpacityInput.value = result.bgOpacity;
-      updateAppearanceLabels();
-    });
+  async function removeUrl(urlToRemove) {
+    state.urls = state.urls.filter((url) => url !== urlToRemove);
+    await storageSet({ subscriptionUrls: state.urls });
+    runTwoPassLayout();
+    await refreshSubscriptions('Refreshing source lists...');
   }
 
   function updateAppearanceLabels() {
     bgOpacityValue.textContent = `${bgOpacityInput.value}%`;
     bgColorValue.textContent = formatColorValue(bgColorInput.value);
     textColorValue.textContent = formatColorValue(textColorInput.value);
-    bgColorSwatch.style.backgroundColor = bgColorInput.value;
-    textColorSwatch.style.backgroundColor = textColorInput.value;
+    bgColorDot.style.backgroundColor = bgColorInput.value;
+    textColorDot.style.backgroundColor = textColorInput.value;
   }
 
   function saveColors() {
-    chrome.storage.local.set({
+    storageSet({
       bgColor: bgColorInput.value,
       textColor: textColorInput.value,
       bgOpacity: parseInt(bgOpacityInput.value, 10)
     });
   }
 
-  function loadFetchStatus() {
-    chrome.storage.local.get({ fetchStatus: null }, (result) => {
-      if (result.fetchStatus) {
-        if (result.fetchStatus.status === 'warning' || result.fetchStatus.status === 'error') {
-          setActivePanel('sourcesPanel');
-        }
-        displayFetchResult(result.fetchStatus);
-        scheduleResize();
-        return;
-      }
-    });
+  async function refreshSubscriptions(message) {
+    state.fetchBar = {
+      hidden: false,
+      tone: 'status-info',
+      text: message
+    };
+    state.fetchWarning = '';
+    runTwoPassLayout();
+
+    const response = await sendRuntimeMessage({ action: 'fetchUrls' });
+    if (response.runtimeError) {
+      state.fetchBar = {
+        hidden: false,
+        tone: 'status-error',
+        text: 'Could not reach the background service. Reload the extension and try again.'
+      };
+      runTwoPassLayout();
+      return;
+    }
+
+    applyFetchResult(response.payload);
+    runTwoPassLayout();
   }
 
-  function refreshSubscriptions(message) {
-    showStatus(message, 'status-info');
-    hideWarning();
-
-    chrome.runtime.sendMessage({ action: 'fetchUrls' }, (response) => {
-      if (chrome.runtime.lastError) {
-        showStatus('Could not reach the background service. Reload the extension and try again.', 'status-error');
-        scheduleResize();
-        return;
-      }
-
-      displayFetchResult(response);
-      scheduleResize();
-    });
-  }
-
-  function displayFetchResult(result) {
+  function applyFetchResult(result) {
     if (!result) {
       return;
     }
@@ -459,50 +289,230 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeSuffix = timestamp ? ` Last updated ${timestamp}.` : '';
 
     if (result.status === 'ok') {
-      showStatus(`Synced ${result.totalItems} items.${timeSuffix}`, 'status-success');
-      hideWarning();
-      scheduleResize();
+      state.fetchBar = {
+        hidden: false,
+        tone: 'status-success',
+        text: `Synced ${result.totalItems} items.${timeSuffix}`
+      };
+      state.fetchWarning = '';
       return;
     }
 
     if (result.status === 'warning') {
-      showStatus(`Loaded ${result.totalItems} items with warnings.${timeSuffix}`, 'status-warning');
-      showWarning(joinErrors(result.errors));
-      scheduleResize();
+      state.activePanel = 'sourcesPanel';
+      state.fetchBar = {
+        hidden: false,
+        tone: 'status-warning',
+        text: `Loaded ${result.totalItems} items with warnings.${timeSuffix}`
+      };
+      state.fetchWarning = joinErrors(result.errors);
       return;
     }
 
     if (result.status === 'error') {
-      showStatus(`Source sync failed.${timeSuffix}`, 'status-error');
-      showWarning(joinErrors(result.errors) || result.error || 'Unable to fetch subscription sources.');
-      scheduleResize();
+      state.activePanel = 'sourcesPanel';
+      state.fetchBar = {
+        hidden: false,
+        tone: 'status-error',
+        text: `Source sync failed.${timeSuffix}`
+      };
+      state.fetchWarning = joinErrors(result.errors) || result.error || 'Unable to fetch subscription sources.';
     }
   }
 
-  function showStatus(message, tone) {
-    fetchStatusBar.hidden = false;
-    fetchStatusBar.textContent = message;
-    fetchStatusBar.className = `status-bar ${tone}`;
-    scheduleResize();
+  function runTwoPassLayout() {
+    // Critical: keep this deterministic two-pass sizing.
+    // It is shared by Chromium popup and Safari/Xcode wrapper and must not use browser-window resize APIs.
+    const firstPassSize = calculatePopupSize(state);
+    applyPopupSize(firstPassSize);
+    renderFromState();
+    const secondPassSize = calculatePopupSize(state);
+    applyPopupSize(secondPassSize);
   }
 
-  function showWarning(message) {
-    if (!message) {
-      hideWarning();
-      scheduleResize();
+  function renderFromState() {
+    renderTabsAndPanels(appShell, state.activePanel);
+    renderBulkComposer(appShell, state.bulkExpanded);
+    renderNamesList(nameList, state.names);
+    renderUrlsList(urlList, state.urls);
+    itemCount.textContent = String(state.names.length);
+    urlCount.textContent = String(state.urls.length);
+    renderFetchBars(appShell, state.fetchBar, state.fetchWarning);
+  }
+
+  function calculatePopupSize(nextState) {
+    const probe = appShell.cloneNode(true);
+    renderTabsAndPanels(probe, nextState.activePanel);
+    renderBulkComposer(probe, nextState.bulkExpanded);
+    renderNamesList(probe.querySelector('#nameList'), nextState.names);
+    renderUrlsList(probe.querySelector('#urlList'), nextState.urls);
+    probe.querySelector('#itemCount').textContent = String(nextState.names.length);
+    probe.querySelector('#urlCount').textContent = String(nextState.urls.length);
+    renderFetchBars(probe, nextState.fetchBar, nextState.fetchWarning);
+    stripProbeIds(probe);
+
+    measureRoot.replaceChildren(probe);
+    const measuredWidth = Math.ceil(probe.getBoundingClientRect().width + POPUP_MARGIN * 2);
+    const measuredHeight = Math.ceil(probe.getBoundingClientRect().height + POPUP_MARGIN * 2);
+    measureRoot.replaceChildren();
+
+    return { width: measuredWidth, height: measuredHeight };
+  }
+
+  function renderTabsAndPanels(root, activePanelId) {
+    const localNamesPanel = root.querySelector('#namesPanel');
+    const localSourcesPanel = root.querySelector('#sourcesPanel');
+    const localNamesButton = root.querySelector('#namesTabButton');
+    const localSourcesButton = root.querySelector('#sourcesTabButton');
+
+    setTabState(localNamesButton, activePanelId === 'namesPanel');
+    setTabState(localSourcesButton, activePanelId === 'sourcesPanel');
+
+    setPanelState(localNamesPanel, activePanelId === 'namesPanel');
+    setPanelState(localSourcesPanel, activePanelId === 'sourcesPanel');
+  }
+
+  function renderBulkComposer(root, isExpanded) {
+    const localBulkComposer = root.querySelector('#bulkComposer');
+    const localBulkToggle = root.querySelector('#bulkToggleButton');
+    localBulkComposer.hidden = !isExpanded;
+    localBulkToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    localBulkToggle.textContent = isExpanded ? 'Hide bulk paste' : 'Paste multiple names';
+  }
+
+  function renderNamesList(targetList, names) {
+    targetList.innerHTML = '';
+
+    if (names.length === 0) {
+      targetList.appendChild(createEmptyState('No tracked names yet.'));
       return;
     }
 
-    fetchWarning.hidden = false;
-    fetchWarning.textContent = message;
-    fetchWarning.className = 'status-bar status-warning';
-    scheduleResize();
+    names.forEach((name) => {
+      targetList.appendChild(createListItem(name, 40, async () => {
+        await removeName(name);
+      }));
+    });
   }
 
-  function hideWarning() {
-    fetchWarning.hidden = true;
-    fetchWarning.textContent = '';
-    scheduleResize();
+  function renderUrlsList(targetList, urls) {
+    targetList.innerHTML = '';
+
+    if (urls.length === 0) {
+      targetList.appendChild(createEmptyState('No subscription sources configured.'));
+      return;
+    }
+
+    urls.forEach((url) => {
+      targetList.appendChild(createListItem(url, 44, async () => {
+        await removeUrl(url);
+      }));
+    });
+  }
+
+  function renderFetchBars(root, fetchBarState, fetchWarningText) {
+    const localFetchStatusBar = root.querySelector('#fetchStatusBar');
+    const localFetchWarning = root.querySelector('#fetchWarning');
+
+    if (fetchBarState.hidden) {
+      localFetchStatusBar.hidden = true;
+      localFetchStatusBar.textContent = '';
+      localFetchStatusBar.className = 'status-bar';
+    } else {
+      localFetchStatusBar.hidden = false;
+      localFetchStatusBar.textContent = fetchBarState.text;
+      localFetchStatusBar.className = `status-bar ${fetchBarState.tone}`;
+    }
+
+    if (fetchWarningText) {
+      localFetchWarning.hidden = false;
+      localFetchWarning.textContent = fetchWarningText;
+      localFetchWarning.className = 'status-bar status-warning';
+    } else {
+      localFetchWarning.hidden = true;
+      localFetchWarning.textContent = '';
+      localFetchWarning.className = 'status-bar status-warning';
+    }
+  }
+
+  function applyPopupSize(size) {
+    const width = `${size.width}px`;
+    const requestedHeight = Math.max(size.height, POPUP_SAFE_MIN_HEIGHT);
+    const height = `${requestedHeight}px`;
+
+    document.documentElement.style.width = width;
+    document.documentElement.style.height = height;
+    document.documentElement.style.overflow = 'hidden';
+
+    document.body.style.width = '100%';
+    document.body.style.height = height;
+
+    cancelAnimationFrame(heightAlignFrame);
+    heightAlignFrame = requestAnimationFrame(() => {
+      const actualViewportHeight = window.visualViewport
+        ? Math.floor(window.visualViewport.height)
+        : Math.floor(window.innerHeight || requestedHeight);
+
+      if (actualViewportHeight > 0 && actualViewportHeight + 1 < requestedHeight) {
+        const cappedHeight = `${actualViewportHeight}px`;
+        document.documentElement.style.height = cappedHeight;
+        document.body.style.height = cappedHeight;
+        document.body.classList.add('popup-capped');
+        return;
+      }
+
+      document.body.classList.remove('popup-capped');
+    });
+  }
+
+  function openAnchoredColorPicker(input, trigger, clickEvent) {
+    const triggerRect = trigger.getBoundingClientRect();
+    const hasPointerLocation = Number.isFinite(clickEvent?.clientX)
+      && Number.isFinite(clickEvent?.clientY)
+      && (clickEvent.clientX !== 0 || clickEvent.clientY !== 0);
+
+    const anchorCenterX = hasPointerLocation
+      ? clickEvent.clientX
+      : (triggerRect.left + (triggerRect.width / 2));
+    const anchorTop = hasPointerLocation
+      ? (clickEvent.clientY + 8)
+      : (triggerRect.bottom + 6);
+    const anchorSize = 24;
+
+    input.style.left = `${Math.round(anchorCenterX - (anchorSize / 2))}px`;
+    input.style.top = `${anchorTop}px`;
+    input.style.width = `${anchorSize}px`;
+    input.style.height = `${anchorSize}px`;
+
+    // Force layout so the picker reads the latest anchor coordinates.
+    input.getBoundingClientRect();
+
+    if (typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch (_) {
+        // Fall through to click() on engines where showPicker exists but is blocked.
+      }
+    }
+
+    input.click();
+  }
+
+  function stripProbeIds(probe) {
+    probe.querySelectorAll('[id]').forEach((element) => {
+      element.removeAttribute('id');
+    });
+  }
+
+  function setTabState(button, isActive) {
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  }
+
+  function setPanelState(panel, isActive) {
+    panel.classList.toggle('is-active', isActive);
+    panel.hidden = !isActive;
   }
 
   function createListItem(value, maxLength, removeHandler) {
@@ -519,10 +529,9 @@ document.addEventListener('DOMContentLoaded', () => {
     removeButton.textContent = 'x';
     removeButton.title = 'Remove';
     removeButton.setAttribute('aria-label', `Remove ${value}`);
-    removeButton.addEventListener('click', () => {
-      removeHandler();
-      scheduleResize();
-    });
+    if (typeof removeHandler === 'function') {
+      removeButton.addEventListener('click', removeHandler);
+    }
 
     item.appendChild(textSpan);
     item.appendChild(removeButton);
@@ -564,5 +573,28 @@ document.addEventListener('DOMContentLoaded', () => {
       hour: 'numeric',
       minute: '2-digit'
     }).format(timestamp);
+  }
+
+  function storageGet(defaultValues) {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(defaultValues, resolve);
+    });
+  }
+
+  function storageSet(values) {
+    return new Promise((resolve) => {
+      chrome.storage.local.set(values, resolve);
+    });
+  }
+
+  function sendRuntimeMessage(payload) {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage(payload, (response) => {
+        resolve({
+          payload: response,
+          runtimeError: chrome.runtime.lastError
+        });
+      });
+    });
   }
 });

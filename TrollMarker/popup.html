@@ -29,26 +29,22 @@
 
       <div class="appearance-grid">
         <div class="field">
-          <label class="field-label" for="bgColorInput">Highlight</label>
+          <span class="field-label">Highlight</span>
           <span class="swatch-control">
-            <span class="swatch-preview" id="bgColorSwatch" aria-hidden="true"></span>
+            <button type="button" id="bgColorButton" class="color-trigger" aria-label="Highlight color">
+              <span class="color-trigger-dot" id="bgColorDot" aria-hidden="true"></span>
+            </button>
             <span class="color-value" id="bgColorValue">#FFFF00</span>
-            <span class="color-input-wrapper">
-              <input type="color" id="bgColorInput" class="color-input-overlay" value="#ffff00"
-                aria-label="Highlight color">
-            </span>
           </span>
         </div>
 
         <div class="field">
-          <label class="field-label" for="textColorInput">Text</label>
+          <span class="field-label">Text</span>
           <span class="swatch-control">
-            <span class="swatch-preview" id="textColorSwatch" aria-hidden="true"></span>
+            <button type="button" id="textColorButton" class="color-trigger" aria-label="Text color">
+              <span class="color-trigger-dot" id="textColorDot" aria-hidden="true"></span>
+            </button>
             <span class="color-value" id="textColorValue">#FF0000</span>
-            <span class="color-input-wrapper">
-              <input type="color" id="textColorInput" class="color-input-overlay" value="#ff0000"
-                aria-label="Text color">
-            </span>
           </span>
         </div>
 
@@ -124,6 +120,9 @@
       <ul id="urlList" class="item-list"></ul>
     </section>
   </div>
+
+  <input type="color" id="bgColorInput" class="color-picker-anchor" value="#ffff00" tabindex="-1" aria-hidden="true">
+  <input type="color" id="textColorInput" class="color-picker-anchor" value="#ff0000" tabindex="-1" aria-hidden="true">
 
   <script src="popup.js"></script>
 </body>

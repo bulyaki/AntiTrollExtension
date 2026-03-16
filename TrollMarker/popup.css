@@ -1,4 +1,6 @@
 :root {
+  --popup-margin: 10px;
+  --shell-width: 348px;
   --bg-top: #fbf6ee;
   --bg-bottom: #ece6dc;
   --surface: rgba(255, 255, 255, 0.84);
@@ -40,20 +42,31 @@ html {
 }
 
 body {
-  width: 368px;
-  min-height: 760px;
-  margin: 0 auto;
-  padding: 12px;
+  width: 100%;
+  margin: 0;
+  padding: var(--popup-margin);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
   font-family: "SF Pro Text", "SF Pro Display", "Segoe UI Variable", "Avenir Next", sans-serif;
   color: var(--text);
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.72), transparent 48%),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
-  overflow: visible;
+  overflow: hidden;
+  visibility: hidden;
 }
 
-body.is-bulk-open {
-  min-height: 960px;
+body.popup-ready {
+  visibility: visible;
+}
+
+.popup-measure-root {
+  position: fixed;
+  left: -10000px;
+  top: -10000px;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 button,
@@ -63,7 +76,8 @@ textarea {
 }
 
 .app-shell {
-  width: 100%;
+  width: var(--shell-width);
+  max-width: var(--shell-width);
   padding: 12px;
   border: 1px solid rgba(186, 175, 158, 0.8);
   border-radius: 20px;
@@ -177,43 +191,36 @@ textarea {
   position: relative;
 }
 
-.swatch-preview {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-  border: 1px solid rgba(29, 28, 25, 0.12);
+.color-trigger {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.color-trigger-dot {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(29, 28, 25, 0.16);
   border-radius: 999px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
-.color-input-wrapper {
-  position: relative;
-  width: 26px;
-  height: 26px;
-  margin-left: auto;
-}
-
-.color-input-overlay {
-  -webkit-appearance: none;
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+.color-picker-anchor {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
+  opacity: 0.001;
+  pointer-events: none;
   background: transparent;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.color-input-overlay::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.color-input-overlay::-webkit-color-swatch {
-  border: 1px solid rgba(29, 28, 25, 0.2);
-  border-radius: 6px;
 }
 
 .color-value {
@@ -221,7 +228,6 @@ textarea {
   font-size: 11px;
   color: var(--text);
   text-transform: uppercase;
-  margin-right: 8px;
 }
 
 input[type="range"] {
@@ -341,7 +347,7 @@ textarea {
   padding: 10px 11px;
   font-size: 12.5px;
   line-height: 1.4;
-  resize: vertical;
+  resize: none;
 }
 
 input[type="text"]::placeholder,
@@ -352,7 +358,7 @@ textarea::placeholder {
 input[type="text"]:focus-visible,
 textarea:focus-visible,
 input[type="range"]:focus-visible,
-input[type="color"]:focus-visible,
+.color-trigger:focus-visible,
 .tab-button:focus-visible,
 .inline-toggle:focus-visible,
 .btn:focus-visible {
@@ -580,4 +586,23 @@ input[type="color"]:focus-visible,
   background: var(--info-bg);
   border-color: var(--info-border);
   color: var(--info-text);
+}
+
+body.popup-capped {
+  overflow: hidden;
+}
+
+body.popup-capped > .app-shell {
+  max-height: calc(100vh - (var(--popup-margin) * 2));
+  overflow-y: auto;
+  padding-right: 9px;
+}
+
+body.popup-capped > .app-shell::-webkit-scrollbar {
+  width: 6px;
+}
+
+body.popup-capped > .app-shell::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #cabfae;
 }
