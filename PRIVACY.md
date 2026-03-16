@@ -1,10 +1,10 @@
-# Privacy Policy — FB Name Marker
+# Privacy Policy — TrollMarker
 
-**Last updated:** March 9, 2026
+**Last updated:** March 16, 2026
 
 ## Summary
 
-FB Name Marker does **not** collect, store, or transmit any personal data.
+TrollMarker does **not** collect, store, or transmit any personal data.
 
 ## Data Storage
 
