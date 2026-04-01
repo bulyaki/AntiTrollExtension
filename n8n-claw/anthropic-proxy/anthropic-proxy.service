@@ -1,16 +1,1 @@
-[Unit]
-Description=Anthropic API Proxy for DashScope
-After=network.target
 
-[Service]
-Type=simple
-User=peter
-WorkingDirectory=/home/peter/n8n-claw/anthropic-proxy
-Environment=PORT=3001
-Environment=DASHSCOPE_API_KEY=sk-sp-c5a7314ae01540139711e064b45ef5ff
-ExecStart=/usr/bin/node server.js
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
